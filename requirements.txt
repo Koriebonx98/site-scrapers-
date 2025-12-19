@@ -1,0 +1,4 @@
+setuptools
+selenium
+webdriver-manager
+undetected-chromedriver
