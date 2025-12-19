@@ -34,3 +34,4 @@ jobs:
         path: |
           All.Games.json
           New.Games.json
+        if-no-files-found: warn
