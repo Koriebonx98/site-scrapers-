@@ -37,35 +37,6 @@ from html import unescape
 from typing import Dict, List, Tuple, Optional
 import tempfile
 
-# -------------------- First Run Detection -------------------- #
-def is_first_run():
-    marker_file = 'first_run_success'
-    return not os.path.exists(marker_file)
-
-def mark_first_run_complete():
-    marker_file = 'first_run_success'
-    with open(marker_file, 'w') as f:
-        f.write('This file indicates that the first run tasks have been completed.')
-
-def install_requirements():
-    """Install packages from requirements.txt on first run."""
-    requirements_file = 'requirements.txt'
-    if not os.path.exists(requirements_file):
-        print(f"Warning: {requirements_file} not found. Skipping requirements installation.")
-        return
-    
-    try:
-        print(f"First run detected. Installing requirements from {requirements_file}...")
-        cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_file]
-        print("Running:", " ".join(cmd))
-        subprocess.check_call(cmd)
-        print("Requirements installed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install requirements: {e}")
-        print("Please run the following manually:")
-        print(f"  {sys.executable} -m pip install -r {requirements_file}")
-        raise
-
 # Configuration
 URL = "https://steamrip.com/games-list-page/"
 DB_FILENAME = "steamrip_games.db"
@@ -258,6 +229,43 @@ def get_script_dir() -> str:
 
 
 SCRIPT_DIR = get_script_dir()
+
+
+# -------------------- First Run Detection -------------------- #
+# Note: This tracks whether requirements installation has been attempted.
+# This is separate from database first-run detection which tracks game data.
+MARKER_FILENAME = 'first_run_success'
+REQUIREMENTS_FILENAME = 'requirements.txt'
+
+def is_first_run():
+    """Check if this is the first run (requirements not yet installed)."""
+    marker_path = os.path.join(SCRIPT_DIR, MARKER_FILENAME)
+    return not os.path.exists(marker_path)
+
+def mark_first_run_complete():
+    """Mark that first-run requirements installation has been completed."""
+    marker_path = os.path.join(SCRIPT_DIR, MARKER_FILENAME)
+    with open(marker_path, 'w') as f:
+        f.write('This file indicates that the first run tasks have been completed.')
+
+def install_requirements():
+    """Install packages from requirements.txt on first run."""
+    requirements_path = os.path.join(SCRIPT_DIR, REQUIREMENTS_FILENAME)
+    if not os.path.exists(requirements_path):
+        print(f"Warning: {requirements_path} not found. Skipping requirements installation.")
+        return
+    
+    try:
+        print(f"First run detected. Installing requirements from {requirements_path}...")
+        cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_path]
+        print("Running:", " ".join(cmd))
+        subprocess.check_call(cmd)
+        print("Requirements installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to install requirements: {e}")
+        print("Please run the following manually:")
+        print(f"  {sys.executable} -m pip install -r {requirements_path}")
+        raise
 
 
 def default_db_path(filename: str) -> str:
