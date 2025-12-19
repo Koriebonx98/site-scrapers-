@@ -37,6 +37,35 @@ from html import unescape
 from typing import Dict, List, Tuple, Optional
 import tempfile
 
+# -------------------- First Run Detection -------------------- #
+def is_first_run():
+    marker_file = 'first_run_success'
+    return not os.path.exists(marker_file)
+
+def mark_first_run_complete():
+    marker_file = 'first_run_success'
+    with open(marker_file, 'w') as f:
+        f.write('This file indicates that the first run tasks have been completed.')
+
+def install_requirements():
+    """Install packages from requirements.txt on first run."""
+    requirements_file = 'requirements.txt'
+    if not os.path.exists(requirements_file):
+        print(f"Warning: {requirements_file} not found. Skipping requirements installation.")
+        return
+    
+    try:
+        print(f"First run detected. Installing requirements from {requirements_file}...")
+        cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_file]
+        print("Running:", " ".join(cmd))
+        subprocess.check_call(cmd)
+        print("Requirements installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to install requirements: {e}")
+        print("Please run the following manually:")
+        print(f"  {sys.executable} -m pip install -r {requirements_file}")
+        raise
+
 # Configuration
 URL = "https://steamrip.com/games-list-page/"
 DB_FILENAME = "steamrip_games.db"
@@ -429,6 +458,13 @@ def main() -> None:
     db_path_used: Optional[str] = None
 
     try:
+        # Handle first run installation
+        if is_first_run():
+            install_requirements()
+            mark_first_run_complete()
+        else:
+            print("First run tasks are already completed. Proceeding to scrape site.")
+        
         # Ensure dependencies and distutils shim
         ensure_imports(PACKAGE_MAP)
         ensure_distutils_shim()
