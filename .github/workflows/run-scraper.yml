@@ -9,6 +9,8 @@ name: Steamrip Scraper
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout Repository
