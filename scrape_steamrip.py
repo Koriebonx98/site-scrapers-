@@ -52,6 +52,30 @@ PACKAGE_MAP: Dict[str, str] = {
 }
 
 
+# -------------------- Requirements.txt Installation -------------------- #
+def install_requirements():
+    """Install packages from requirements.txt if it exists."""
+    requirements_path = os.path.join(get_script_dir_early(), "requirements.txt")
+    if not os.path.exists(requirements_path):
+        return
+    
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
+        print("All requirements installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print("Failed to install requirements:", e)
+        sys.exit(1)
+
+
+def get_script_dir_early() -> str:
+    """Get script directory early in execution (before __file__ might be unavailable)."""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    if "__file__" in globals():
+        return os.path.dirname(os.path.abspath(__file__))
+    return os.getcwd()
+
+
 # -------------------- Utilities: pip/install/distutils shim -------------------- #
 def run_pip_install(packages: List[str]) -> None:
     if not packages:
@@ -429,6 +453,9 @@ def main() -> None:
     db_path_used: Optional[str] = None
 
     try:
+        # Install requirements from requirements.txt if it exists
+        install_requirements()
+        
         # Ensure dependencies and distutils shim
         ensure_imports(PACKAGE_MAP)
         ensure_distutils_shim()
