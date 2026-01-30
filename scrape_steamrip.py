@@ -432,7 +432,13 @@ def save_new_games_file(new_entries: List[Dict[str, str]], path: str) -> None:
 def get_uc_driver():
     import undetected_chromedriver as uc
     opts = uc.ChromeOptions()
-    opts.add_argument("--start-maximized")
+    # Enable headless mode in CI environments
+    if os.environ.get("CI"):
+        opts.add_argument("--headless=new")
+        opts.add_argument("--no-sandbox")
+        opts.add_argument("--disable-dev-shm-usage")
+    else:
+        opts.add_argument("--start-maximized")
     return uc.Chrome(options=opts)
 
 
@@ -443,7 +449,13 @@ def get_selenium_driver():
     from webdriver_manager.chrome import ChromeDriverManager
 
     chrome_opts = Options()
-    chrome_opts.add_argument("--start-maximized")
+    # Enable headless mode in CI environments
+    if os.environ.get("CI"):
+        chrome_opts.add_argument("--headless=new")
+        chrome_opts.add_argument("--no-sandbox")
+        chrome_opts.add_argument("--disable-dev-shm-usage")
+    else:
+        chrome_opts.add_argument("--start-maximized")
     chrome_opts.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_opts.add_experimental_option("useAutomationExtension", False)
     chrome_opts.add_argument("--disable-blink-features=AutomationControlled")
@@ -513,7 +525,8 @@ def main() -> None:
             conn.commit()
             print("Created an empty run record in the database.")
             print("\nRun completed (empty snapshot).")
-            input("Done. Press Enter to quit and close the browser...")
+            if not os.environ.get("CI"):
+                input("Done. Press Enter to quit and close the browser...")
             return
 
         first_run, new_entries = run_persist(conn, results)
@@ -531,15 +544,17 @@ def main() -> None:
                 print("No new games found this run.")
 
         print("\nRun completed normally.")
-        input("Done. Press Enter to quit and close the browser...")
+        if not os.environ.get("CI"):
+            input("Done. Press Enter to quit and close the browser...")
 
     except Exception:
         print("\nAn unhandled exception occurred:")
         traceback.print_exc()
-        try:
-            input("\nPress Enter to exit and close the browser...")
-        except Exception:
-            pass
+        if not os.environ.get("CI"):
+            try:
+                input("\nPress Enter to exit and close the browser...")
+            except Exception:
+                pass
         sys.exit(1)
 
     finally:
