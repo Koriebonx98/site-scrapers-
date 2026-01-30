@@ -1,0 +1,40 @@
+name: Daily Scrape and Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'  # Specify your desired Python version
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt  # Adjust if using packages
+
+      - name: Run the scraping script
+        run: |
+          python scrape_steamrip.py
+      
+      - name: Check for updated JSON files
+        id: check-json
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "action@github.com"
+          git diff --exit-code All.Games.json New.Games.json || echo "changed"
+
+      - name: Commit updated JSON files
+        run: |
+          git add All.Games.json New.Games.json
+          git commit -m "Update JSON files from daily scrape" || echo "No changes"
+          git push
+        if: steps.check-json.outputs.changed == 'changed'
