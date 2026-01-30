@@ -1,40 +1,50 @@
-name: Daily Scrape and Update
+name: Daily Scrape Update
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+    - cron: '0 0 * * *'
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          python-version: '3.x'  # Specify your desired Python version
+          node-version: '14'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt  # Adjust if using packages
+        run: npm install
 
-      - name: Run the scraping script
-        run: |
-          python scrape_steamrip.py
-      
-      - name: Check for updated JSON files
-        id: check-json
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "action@github.com"
-          git diff --exit-code All.Games.json New.Games.json || echo "changed"
+      - name: Run the scrape script
+        run: node scrape.js
 
-      - name: Commit updated JSON files
+      # New steps to verify the JSON files
+      - name: Check All.Games.json
         run: |
-          git add All.Games.json New.Games.json
-          git commit -m "Update JSON files from daily scrape" || echo "No changes"
-          git push
-        if: steps.check-json.outputs.changed == 'changed'
+          if [ ! -f All.Games.json ]; then
+            echo "All.Games.json does not exist!";
+            exit 1;
+          fi
+
+      - name: Check New.Games.json
+        run: |
+          if [ ! -f New.Games.json ]; then
+            echo "New.Games.json does not exist!";
+            exit 1;
+          fi
+
+      - name: Validate All.Games.json and New.Games.json
+        run: |
+          if ! jq . All.Games.json; then
+            echo "All.Games.json is not valid JSON!";
+            exit 1;
+          fi
+          if ! jq . New.Games.json; then
+            echo "New.Games.json is not valid JSON!";
+            exit 1;
+          fi
