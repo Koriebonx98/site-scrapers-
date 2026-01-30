@@ -98,7 +98,7 @@ def test_database_operations():
         
         first_run, new_entries = scraper.run_persist(conn, test_games)
         
-        assert first_run == True, "First run should be detected"
+        assert first_run is True, "First run should be detected"
         assert len(new_entries) == 0, "First run should have no new entries"
         
         # Verify games were inserted
@@ -114,7 +114,7 @@ def test_database_operations():
         
         first_run, new_entries = scraper.run_persist(conn, test_games_2)
         
-        assert first_run == False, "Should not be first run"
+        assert first_run is False, "Should not be first run"
         assert len(new_entries) == 1, f"Expected 1 new entry, got {len(new_entries)}"
         assert new_entries[0]["Name"] == "Test Game 3"
         
