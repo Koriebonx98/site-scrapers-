@@ -46,6 +46,7 @@ JSON_NEW = "New.Games.json"
 # mapping import_name -> pip package name
 PACKAGE_MAP: Dict[str, str] = {
     "setuptools": "setuptools",
+    "requests": "requests",
     "selenium": "selenium",
     "webdriver_manager": "webdriver-manager",
     "undetected_chromedriver": "undetected-chromedriver",
@@ -178,6 +179,21 @@ def extract_games_from_html(html: str) -> List[Dict[str, str]]:
         seen.add(href)
         results.append({"Name": name, "Url": href})
     return results
+
+
+def scrape_with_requests() -> List[Dict[str, str]]:
+    """Attempt a lightweight HTTP-only scrape (no browser required)."""
+    import requests as req
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        )
+    }
+    resp = req.get(URL, headers=headers, timeout=30)
+    resp.raise_for_status()
+    return extract_games_from_html(resp.text)
 
 
 def scrape(driver) -> List[Dict[str, str]]:
@@ -489,25 +505,35 @@ def main() -> None:
         ensure_imports(PACKAGE_MAP)
         ensure_distutils_shim()
 
-        # Start driver (try undetected_chromedriver first)
-        try:
-            print("Trying undetected-chromedriver...")
-            driver = get_uc_driver()
-        except Exception:
-            print("undetected-chromedriver failed; falling back to selenium. Traceback:")
-            traceback.print_exc()
-            try:
-                importlib.import_module("webdriver_manager")
-            except Exception:
-                try:
-                    run_pip_install(["webdriver-manager"])
-                except Exception:
-                    pass
-            driver = get_selenium_driver()
-
-        # Scrape
+        # Scrape: try lightweight requests first, fall back to headless browser
+        results: List[Dict[str, str]] = []
         print("Scraping", URL)
-        results = scrape(driver)
+        try:
+            print("Trying requests-based scrape...")
+            results = scrape_with_requests()
+            if results:
+                print(f"requests scrape succeeded: {len(results)} games found.")
+            else:
+                raise ValueError("requests scrape returned no games; site structure may have changed or JS rendering is required")
+        except Exception:
+            print("requests scrape failed; falling back to headless browser. Traceback:")
+            traceback.print_exc()
+            # Start driver (try undetected_chromedriver first)
+            try:
+                print("Trying undetected-chromedriver...")
+                driver = get_uc_driver()
+            except Exception:
+                print("undetected-chromedriver failed; falling back to selenium. Traceback:")
+                traceback.print_exc()
+                try:
+                    importlib.import_module("webdriver_manager")
+                except Exception:
+                    try:
+                        run_pip_install(["webdriver-manager"])
+                    except Exception:
+                        pass
+                driver = get_selenium_driver()
+            results = scrape(driver)
 
         # Connect DB (script dir preferred; fallback to home)
         try:
