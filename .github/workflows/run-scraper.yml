@@ -10,7 +10,7 @@ jobs:
   run-scraper:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
     - name: Checkout Repository
@@ -28,6 +28,16 @@ jobs:
 
     - name: Run Scraper
       run: python scrape_steamrip.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add All.Games.json New.Games.json
+        git diff-index --quiet HEAD || git commit -m "Update scraped JSON files"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Output Files
       uses: actions/upload-artifact@v4
