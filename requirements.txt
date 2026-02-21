@@ -1,4 +1,5 @@
 setuptools
+requests
 selenium
 webdriver-manager
 undetected-chromedriver
