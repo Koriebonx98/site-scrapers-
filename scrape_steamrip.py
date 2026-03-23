@@ -163,7 +163,7 @@ def extract_games_from_html(html: str) -> List[Dict[str, str]]:
         if not raw_href:
             continue
         if raw_href.startswith("/"):
-            href = "https://steamrip.com" + raw_href.lstrip("/")
+            href = "https://steamrip.com" + raw_href
         else:
             href = raw_href
         href = href.rstrip("/")
@@ -216,7 +216,7 @@ def scrape(driver) -> List[Dict[str, str]]:
     for a in anchors:
         href = a.get_attribute("href") or a.get_attribute("data-href") or ""
         if href and href.startswith("/"):
-            href = "https://steamrip.com" + href.lstrip("/")
+            href = "https://steamrip.com" + href
         href = href.rstrip("/")
         text = a.text or a.get_attribute("innerText") or ""
         name = clean_name(text)

@@ -55,12 +55,16 @@ def test_extract_games_from_html():
     
     assert len(games) >= 3, f"Expected at least 3 games, got {len(games)}"
     
-    # Verify structure
+    # Verify structure and correct URL construction
     for game in games:
         assert "Name" in game
         assert "Url" in game
         assert game["Name"] != ""
         assert game["Url"] != ""
+        # Ensure relative paths are correctly joined: no missing slash after domain
+        assert game["Url"].startswith("https://steamrip.com/"), (
+            f"URL missing slash after domain: {game['Url']}"
+        )
     
     print(f"✓ Extracted {len(games)} games from HTML")
     print(f"  Sample: {games[0]}")
