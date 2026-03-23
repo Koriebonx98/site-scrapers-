@@ -10,9 +10,6 @@ first_run_success
 # Database files
 *.db
 
-# JSON output files
-All.Games.json
-New.Games.json
 
 # Virtual environment
 venv/
